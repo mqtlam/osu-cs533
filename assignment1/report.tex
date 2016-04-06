@@ -1,0 +1,218 @@
+\documentclass[paper=a4, fontsize=11pt]{scrartcl}
+
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\setlength{\headheight}{25pt}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\usepackage{graphicx}
+\usepackage{epigraph}
+\usepackage{amsmath,amssymb,amsfonts }
+\usepackage{lastpage}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+
+\newcommand{\Abf}{\ensuremath{\mathbf{A}}}
+\newcommand{\bbf}{\ensuremath{\mathbf{b}}}
+\newcommand{\cbf}{\ensuremath{\mathbf{c}}}
+\newcommand{\abf}{\ensuremath{\mathbf{a}}}
+\newcommand{\xbf}{\ensuremath{\mathbf{x}}}
+\newcommand{\ybf}{\ensuremath{\mathbf{y}}}
+\newcommand{\Rbb}{\ensuremath{\mathbb{R}}}
+\newcommand{\Rbf}{\ensuremath{\mathbf{R}}}
+\newcommand{\fo}{\ensuremath{f_0}}
+\newcommand{\fii}{\ensuremath{f_i}}
+\newcommand{\transpose}[1]{#1^\mathsf{T}}
+\newcommand{\norm}[1]{\ensuremath{\lVert{#1}\rVert}}
+
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{observation}[theorem]{Observation}
+
+\newenvironment{proof}[1][Proof]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+%\newenvironment{definition}[1][Definition]{\begin{trivlist}
+%\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Example]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{remark}[1][Remark]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\newcommand{\qed}{\nobreak \ifvmode \relax \else
+      \ifdim\lastskip<1.5em \hskip-\lastskip
+      \hskip1.5em plus0em minus0.5em \fi \nobreak
+      \vrule height0.75em width0.5em depth0.25em\fi}
+
+
+\newcommand{\lecture}{Homework \#1 Report} %lecture number and date goes here
+\newcommand{\lecturedate}{Due: April 6, 2016} %lecture date goeshere
+\newcommand{\scribe}{Michael Lam} %student name goes here
+
+\fancyhead[L]{\small Spring 2016}
+\fancyhead[R]{\small \lecture}
+%\fancyfoot[L]{\small CS 533: Intelligent Agents and Decision Making}
+%\fancyfoot[C]{}
+\fancyfoot[C]{\thepage\ of \pageref{LastPage}}
+
+
+\begin{document}
+
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} % Create horizontal rule command with 1 argument of height
+
+\title{	
+\normalfont \normalsize
+\vspace{-30pt}
+\textsc{CS 533: Intelligent Agents and Decision Making} \\ [10pt]
+\horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
+\LARGE \lecture\\ % The assignment title
+\vspace{5pt}
+\normalsize \scribe\\
+\lecturedate\\
+\horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
+}
+
+
+\date{} % Today's date or a custom date
+
+\maketitle
+\vspace{-100pt}
+%\epigraph{''Every problem is an optimization problem in disguise.''}{--Anonymous}
+
+\begin{abstract}
+This assignment is about modeling Pac-Man as a Markov Decision Process (MDP).
+\end{abstract}
+
+An MDP contains a state space $S$, action space $A$, transition function $T$ and reward function $R$. An MDP for Pac-Man will be specified below. It is assumed that the game has a simpler environment where the ghost movements are less complex.
+
+\section{Actions}
+
+The set of actions correspond to the joystick controls:
+
+\begin{equation}
+A = \left\{\textit{UP}, \textit{RIGHT}, \textit{DOWN}, \textit{LEFT}, \textit{NO-OP} \right\}
+\end{equation}
+
+Where $\textit{NO-OP}$ denotes no operation or ``do nothing''.
+
+\section{States}
+
+The set of states $S$ will be defined as a tuple containing:
+
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\item $\textit{board\_config}$
+\item $\textit{current\_heading}$
+\item $\textit{pending\_heading}$
+\item $\textit{ghosts\_current\_heading}$
+\item $\textit{ghosts\_is\_edible}$
+\item $\textit{ghost\_edible\_timer}$
+\end{itemize}
+
+where
+
+\begin{itemize}
+\item $\textit{board\_config}$ is the current board configuration. It is an $H \times W$ array, where each element (a.k.a. cell) takes on the following possible values:
+
+\begin{itemize}
+\item $0$ if the cell is a wall
+\item $1$ if the cell is clear
+\item $2$ if the cell contains a small dot
+\item $3$ if the cell contains a large dot
+\item $4$ if the cell contains PacMan
+\item $5$ if the cell contains ghost 1
+\item $6$ if the cell contains ghost 2
+\item $7$ if the cell contains ghost 3
+\item $8$ if the cell contains ghost 4
+\item $\ldots$ if there are more ghosts
+\end{itemize}
+
+Assume that elements can overlap each other (i.e. multiple ghosts can occupy one cell like in the beginning) and one can keep enumerating to represent states for cells containing multiple elements.
+
+Bonus point items in the real game such as the cherry will be ignored since it is assumed that there are no other points possible other than eating a dot, eating a ghost and advancing to the next level.
+
+\item $\textit{current\_heading}$ is the current heading of PacMan. The possible values are $\textit{FACING-UP}$, $\textit{FACING-RIGHT}$, $\textit{FACING-DOWN}$, $\textit{FACING-LEFT}$.
+
+\item $\textit{pending\_heading}$ is the next heading of PacMan. The possible values are $\textit{FACING-UP}$, $\textit{FACING-RIGHT}$, $\textit{FACING-DOWN}$, $\textit{FACING-LEFT}$.
+
+This addresses a subtlety in the PacMan controls. If PacMan is currently heading in a certain direction and the user changes direction, PacMan will try to head in the new direction. If successful, then it will change. If unsuccessful, then it will wait until it can, assuming the user does nothing until then. This is addressed more in the transition function.
+
+\item $\textit{ghosts\_current\_headings}$ holds the current headings of the ghosts. It is a vector of $K$ elements assuming $K$ ghosts, each element $i$ holding the current heading of the $i$th ghost. 
+
+The possible values are $\textit{FACING-UP}$, $\textit{FACING-RIGHT}$, $\textit{FACING-DOWN}$, $\textit{FACING-LEFT}$.
+
+\item $\textit{ghost\_edible\_timer} \in \mathbb{Z}^{\geq 0}$ is a global timer until ghosts are no longer edible. This is $0$ when ghosts are not edible and this is a positive integer when (some, possibly none) ghosts are edible, where the positive integer indicates the remaining time.
+
+\item $\textit{ghosts\_is\_edible}$ is a vector of $K$ boolean elements, indicating whether the $i$th ghost is edible.
+\end{itemize}
+
+There might be some other subtleties of the game. For instance, perhaps one needs to keep track of the velocities of the ghosts and a timer of the game, since eating a large dot might slow down the ghosts and the ghosts might become faster as the game timer continually increases.  However, let us assume we have covered the basics of the game.
+
+\section{Transition Function}
+
+The transition function specifies the probability of going to state $s' \in S$ after taking action $a \in A$ in state $s \in S$.  Since the space is complex, the transition function will be decomposed into some rules:
+
+\subsection{Initial State}
+
+The beginning of the game can be represented as a state. The $\textit{board\_config}$ is how the walls, dots, etc. in the level are laid out in the beginning. Assume PacMan starts somewhere and all the ghosts start in the center. Assume PacMan begins facing in an arbitrary direction $d \in \textit{current\_heading}$. The $\textit{pending\_heading}$ is also set to $d$ because the joystick has not moved yet. Finally, $\textit{ghost\_edible\_timer}$ is set to $0$ since PacMan has not eaten a large dot yet. This also means that $\textit{ghosts\_is\_edible}$ is initialized so that all elements are set to $FALSE$.
+
+The only thing stochastic is that each ghost is initialized to a random direction, which is stored in $\textit{ghosts\_current\_headings}$. This can also be represented as several states following immediately from the initial state regardless of whatever action. The transition probabilities would correspond to the probabilities of the ghosts initialized to certain directions.
+
+\subsection{No-Op Action Updates}
+
+Assume the joystick does not move. The following updates happen:
+
+\begin{itemize}
+\item PacMan continues moving in the direction of $\textit{current\_heading}$. Once it hits a wall, it will assign $\textit{pending\_heading}$ to $\textit{current\_heading}$ and set $\textit{pending\_heading}$ to the $\textit{current\_heading}$. It will try to move in that new direction until it hits a wall. If PacMan cannot move forward, then it just stays at its current location. If PacMan goes off the boundary of the grid (i.e. if there's no wall at the boundary), it will wrap around to the other side of the grid.
+
+\item When PacMan goes over a small dot, PacMan consumes it and so the dot disappears.
+
+\item When PacMan goes over a large dot, PacMan consumes it and so the dot disappears. The $\textit{ghost\_edible\_timer}$ is also set to $\tau$, the time until the ghosts are no longer edible. Also, the $\textit{ghosts\_is\_edible}$ vector is set so all elements are $TRUE$. The $\textit{ghost\_edible\_timer} > 0$ will decrement until $\textit{ghost\_edible\_timer} = 0$, at which point the ghosts are no longer edible (and $\textit{ghosts\_is\_edible}$ is set to all $FALSE$ at that point).
+
+\item When there are no more little dots and large dots, PacMan wins the level. This state gets a reward (see reward function in the next section).
+
+\item When PacMan collides with a ghost and $\textit{ghosts\_is\_edible}$ is set to $FALSE$ for that particular ghost, PacMan dies.
+
+\item When PacMan collides with a ghost and $\textit{ghosts\_is\_edible}$ indicates that the ghost is edible, PacMan consumes the ghost. The ghost will travel back to the center and become inedible by setting the corresponding element in $\textit{ghosts\_is\_edible}$ to $TRUE$.
+
+\item Every ghost will continue moving in its current direction as indicated in $\textit{ghosts\_current\_heading}$. When a ghost reaches a wall, it will randomly pick a valid direction (so it no longer runs into a wall), updates the corresponding element in $\textit{ghosts\_current\_heading}$ and then continue moving in that new direction. These were given assumptions and simplifications of the game.
+\end{itemize}
+
+\subsection{Joystick Updates}
+
+Assume the joystick is pressed (up, right, down or left). The following updates happen:
+
+\begin{itemize}
+\item If Pacman can proceed in the new direction, it will update $\textit{current\_heading}$ and $\textit{pending\_heading}$ to the new direction and start moving in the new direction.
+
+\item If Pacman cannot proceed in the new direction, it will update $\textit{pending\_heading}$ to the new direction. Pacman will continue moving in the direction of $\textit{current\_heading}$ until it runs into a wall or the joystick is changed. This is part of the subtlety of the joystick controls.
+\end{itemize}
+
+\section{Reward Function}
+
+The reward function is as follows: $R=1$ if the board contains no dots (small or big) and $R=0$ otherwise. When the board contains no dots, that means the level is cleared and PacMan survived, ready for the next level. The goal is to keep advancing levels to accumulate more points.
+
+%\begin{figure}
+%\centering
+%\centering
+% \begin{minipage}{.5\columnwidth}
+%\centering
+%  	\includegraphics[width=1\linewidth]{question5b_loss.png}
+%  	\footnotesize{(a)}
+% \end{minipage}\hfill%
+%\centering
+% \begin{minipage}{.5\columnwidth}
+%\centering
+%  	\includegraphics[width=1\columnwidth]{question5b_error.png}
+%  	\footnotesize{(b)}
+% \end{minipage}\hfill%
+%\caption{Question 5: change dense layers of question 4 to 256 hidden units. (a) Training and validation loss. (b) Training and validation error.}
+%\label{fig:question5b}
+%\end{figure}
+
+\end{document}
