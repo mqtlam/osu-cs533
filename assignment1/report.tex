@@ -85,7 +85,7 @@
 %\epigraph{''Every problem is an optimization problem in disguise.''}{--Anonymous}
 
 \begin{abstract}
-This assignment is about modeling Pac-Man as a Markov Decision Process (MDP).
+This assignment is about modeling (simplified) Pac-Man as a Markov Decision Process (MDP).
 \end{abstract}
 
 An MDP contains a state space $S$, action space $A$, transition function $T$ and reward function $R$. An MDP for Pac-Man will be specified below. It is assumed that the game has a simpler environment where the ghost movements are less complex.
@@ -163,16 +163,16 @@ The beginning of the game can be represented as a state. The $\textit{board\_con
 
 The only thing stochastic is that each ghost is initialized to a random direction, which is stored in $\textit{ghosts\_current\_headings}$. This can also be represented as several states following immediately from the initial state regardless of whatever action. The transition probabilities would correspond to the probabilities of the ghosts initialized to certain directions.
 
-\subsection{No-Op Action Updates}
+\subsection{Updates}
 
-Assume the joystick does not move. The following updates happen:
+The following updates happen after any kind of action is taken, whether the joystick moves or the joystick is not doing anything.
 
 \begin{itemize}
-\item PacMan continues moving in the direction of $\textit{current\_heading}$. Once it hits a wall, it will assign $\textit{pending\_heading}$ to $\textit{current\_heading}$ and set $\textit{pending\_heading}$ to the $\textit{current\_heading}$. It will try to move in that new direction until it hits a wall. If PacMan cannot move forward, then it just stays at its current location. If PacMan goes off the boundary of the grid (i.e. if there's no wall at the boundary), it will wrap around to the other side of the grid.
+\item If PacMan moves off the boundary of the grid (i.e. if there's no wall at the boundary), it will wrap around to the other side of the grid.
 
-\item When PacMan goes over a small dot, PacMan consumes it and so the dot disappears.
+\item When PacMan goes over a small dot, PacMan consumes it and so the dot disappears. (In other words, the cell at that point will no longer be $2$.)
 
-\item When PacMan goes over a large dot, PacMan consumes it and so the dot disappears. The $\textit{ghost\_edible\_timer}$ is also set to $\tau$, the time until the ghosts are no longer edible. Also, the $\textit{ghosts\_is\_edible}$ vector is set so all elements are $TRUE$. The $\textit{ghost\_edible\_timer} > 0$ will decrement until $\textit{ghost\_edible\_timer} = 0$, at which point the ghosts are no longer edible (and $\textit{ghosts\_is\_edible}$ is set to all $FALSE$ at that point).
+\item When PacMan goes over a large dot, PacMan consumes it and so the dot disappears.  (In other words, the cell at that point will no longer be $3$.) The $\textit{ghost\_edible\_timer}$ is also set to $\tau$, the time until the ghosts are no longer edible. Also, the $\textit{ghosts\_is\_edible}$ vector is set so all elements are $TRUE$. The $\textit{ghost\_edible\_timer} > 0$ will decrement until $\textit{ghost\_edible\_timer} = 0$, at which point the ghosts are no longer edible (and $\textit{ghosts\_is\_edible}$ is set to all $FALSE$ at that point).
 
 \item When there are no more little dots and large dots, PacMan wins the level. This state gets a reward (see reward function in the next section).
 
@@ -180,22 +180,30 @@ Assume the joystick does not move. The following updates happen:
 
 \item When PacMan collides with a ghost and $\textit{ghosts\_is\_edible}$ indicates that the ghost is edible, PacMan consumes the ghost. The ghost will travel back to the center and become inedible by setting the corresponding element in $\textit{ghosts\_is\_edible}$ to $TRUE$.
 
-\item Every ghost will continue moving in its current direction as indicated in $\textit{ghosts\_current\_heading}$. When a ghost reaches a wall, it will randomly pick a valid direction (so it no longer runs into a wall), updates the corresponding element in $\textit{ghosts\_current\_heading}$ and then continue moving in that new direction. These were given assumptions and simplifications of the game.
+\item Every ghost will continue moving in its current direction as indicated in $\textit{ghosts\_current\_heading}$. When a ghost reaches a wall, it will randomly pick a valid direction (so it no longer runs into a wall), update the corresponding element in $\textit{ghosts\_current\_heading}$ and then continue moving in that new direction. These were given assumptions and simplifications of the game. The positions of ghosts are encoded in $\textit{board\_config}$.
+\end{itemize}
+
+\subsection{No-Op Action Updates}
+
+Assume the joystick does not move. The following updates also happen in addition to the regular updates:
+
+\begin{itemize}
+\item PacMan moves as follows. In the current cell, it will attempt to move in the direction of $\textit{pending\_heading}$. If it can, it will move in that direction and then set $\textit{current\_heading}$ to $\textit{pending\_heading}$. If it cannot, it will attempt to move in the direction of $\textit{current\_heading}$. If it can, it will move in the direction of $\textit{current\_heading}$. If it cannot, PacMan will simply not move until there is a joystick update. All of this addresses the subtlety in the joystick controls: one can specify the next move ahead of time. The position of PacMan is encoded in $\textit{board\_config}$ with a $4$ in the cell.
 \end{itemize}
 
 \subsection{Joystick Updates}
 
-Assume the joystick is pressed (up, right, down or left). The following updates happen:
+Assume the joystick is pressed (up, right, down or left). The following updates also happen in addition to the regular updates:
 
 \begin{itemize}
 \item If Pacman can proceed in the new direction, it will update $\textit{current\_heading}$ and $\textit{pending\_heading}$ to the new direction and start moving in the new direction.
 
-\item If Pacman cannot proceed in the new direction, it will update $\textit{pending\_heading}$ to the new direction. Pacman will continue moving in the direction of $\textit{current\_heading}$ until it runs into a wall or the joystick is changed. This is part of the subtlety of the joystick controls.
+\item If Pacman cannot proceed in the new direction, it will update $\textit{pending\_heading}$ to the new direction. Pacman will continue moving in the direction of $\textit{current\_heading}$ until it can move in the $\textit{pending\_heading}$ direction or the joystick is changed or it's stopped because of a wall. This is part of the subtlety of the joystick controls.
 \end{itemize}
 
 \section{Reward Function}
 
-The reward function is as follows: $R=1$ if the board contains no dots (small or big) and $R=0$ otherwise. When the board contains no dots, that means the level is cleared and PacMan survived, ready for the next level. The goal is to keep advancing levels to accumulate more points.
+The reward function is as follows: $R=1$ if the board contains no dots (small or big) and $R=0$ otherwise. When the board contains no dots, that means the level is cleared and PacMan survived, ready for the next level. The goal is to keep advancing levels to accumulate more points. Thus designing the reward function like this encourages PacMan to advance levels.
 
 %\begin{figure}
 %\centering
