@@ -60,3 +60,9 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Custom
+venv/
+*.zip
+*.aux
+*.synctex.gz
