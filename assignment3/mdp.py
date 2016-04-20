@@ -69,6 +69,20 @@ class MDP:
                     c = StringIO(u""+line)
                     self.R = np.loadtxt(c)
 
+    def save_to_file(self, filename):
+        """Save MDP to file.
+
+        Args:
+            filename: path to MDP file
+        """
+        with open(filename, 'w') as f:
+            f.write('{} {}\n\n'.format(self.n, self.m))
+            for a in range(self.m):
+                matrix = '\n'.join('    '.join('{0:0.4f}'.format(float(c)) for c in r) for r in self.T[a])
+                f.write('{}\n\n'.format(matrix))
+            f.write('    '.join(['{0:0.4f}'.format(float(a)) for a in self.R]))
+            f.write('\n')
+
     def get_transition_prob(self, state, action, next_state=None):
         """Get transition probabilities given current state and action.
 
