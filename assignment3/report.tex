@@ -301,20 +301,24 @@ We experimented with two sets of parameters. We made the following assumptions f
 
 \begin{itemize}
 \item The reward for states without being parked is $-1$ to discourage from driving too much.
-\item The reward for parking as a function of being in row $r \in \{2, 3, \ldots, n\}$ (note: not in handicap spot) is $(n-(r-1))/(n-1) \cdot F$, where $F=10$ is an adjustable reward factor.
-\item The reward for parking in the handicap spots is $-100$. This assumption is that the driver really doesn't want a ticket.
-\item The reward for parking in an occupied spot, i.e. collision, is $-10000$. Collisions are really bad, so don't even bother.
+\item The reward for parking as a function of being in row $r \in \{2, 3, \ldots, n\}$ (note: not in handicap spot) is $(n-(r-1))/(n-1) \cdot F$, where $F=10$ is an adjustable reward factor. It is more desirable to park nearer to the store.
+\item The reward for parking in the handicap spots is $-100$. The assumption here is that the driver really doesn't want to risk a ticket.
+\item The reward for parking in an occupied spot, i.e. collision, is $-10000$. Collisions are really, really bad.
 \item The reward for the terminal state is $1$. The terminal state also has no transitions so it's the last state.
+\item After a DRIVE action, if the next spot is not a handicap spot, the probability that the next spot is occupied by another car is a linear function of the row $r$: $(n-(r-1))/(n-1)$. As the row goes further away from the store, the probability of being occupied is decreased.
+\item After a DRIVE action, if the next spot is a handicap spot, the probability that the next spot is occupied by another car is fixed at $0.001$, which is a relatively small probability.
 \end{itemize}
 
-The second one, which we will denote as ``reckless driver'', is the same except for the following:
+The second one, which we will denote as ``reckless driver'', is the same as above except for the following:
 
 \begin{itemize}
 \item The reward for parking in a handicap spot is $100$. The driver doesn't care about getting a ticket and just wants a spot.
-\item The reward for parking in an occupied spot, i.e. collision, is $100$. The driver is clearly an idiot and doesn't mind causing collisions; he really just wants a parking spot.
+\item The reward for parking in an occupied spot, i.e. collision, is $100$. The driver is clearly an idiot and doesn't mind causing collisions; he really just wants his parking spot!
 \end{itemize}
 
-In all the experiments, we set number of rows $n=10$. We use policy iteration to get the exact optimal policy and value function.
+Basically the reckless driver just wants a parking spot no matter the consequences. It would make sense that the optimal policies of the reasonable driver and reckless driver would be different. We will test this below.
+
+In all the experiments, we set number of rows $n=10$. We set the discount factor $\beta = 0.99$, which is close to $1$ to let the behavior be mainly influenced by the MDP dynamics and reward. We use policy iteration to get the exact optimal policy and value function.
 
 \subsection{Results: reasonable driver}
 
@@ -403,6 +407,8 @@ Here is the value function for the reasonable driver:
 (B, 9, occupied, parked)		-9999.01000000
 (terminal state)			1.00000000
 \end{verbatim}
+
+The value function has negative values for the collision states and parking in the handicap spots. The collision states are more negative than parking in the handicap spots. The highest value is $90.99$, which corresponds to states where the agent has parked in an unoccupied spot in A1 or B1. Thus these are the best spots to park. The values decrease as the row number gets larger, which makes sense since the reward for parking farther from the store is less.
 
 Here is the policy for the reasonable driver:
 
@@ -582,6 +588,8 @@ Here is the value function for the reckless driver:
 (terminal state)			1.00000000
 \end{verbatim}
 
+The value function does not have negative rewards anymore. The states with the highest value (100.99) are the states when the parking spot is occupied and the agent is parked. So the optimal states are those when the agent is parked with a collision? This may not make sense at first but it's plausible given the policy below.
+
 Here is the policy for the reckless driver:
 
 \begin{verbatim}
@@ -672,7 +680,7 @@ Some aspects of the policy makes sense. When parked, the next action is EXIT. Wh
 
 What's interesting is the decision to DRIVE or PARK. The optimal action at a handicap spot is now to PARK. This makes sense because the reward is high enough so that it is desirable to park. Interestingly, when a spot is occupied, the optimal action is to PARK! There is a high enough reward to cause a collision so this is the optimal action. This is the behavior of a reckless driver.
 
-What is an interesting side effect is that the only unoccupied spots where PARK is the optimal action is A0 and B0. A1, B1, B2 and B3 are no longer unoccupied spots where PARK is optimal! The plausible explanation is that the agent is maximizing the chances of causing a collision (since there's high reward for collisions) so it keeps on driving around the parking lot until there is a occupied spot to cause a collision. This was an interesting consequence. In conclusion, this is clearly a reckless driver.
+What is an interesting side effect is that the only unoccupied spots where PARK is the optimal action is A0 and B0. A1, B1, B2 and B3 are no longer unoccupied spots where PARK is optimal! A plausible explanation is that the agent is maximizing the chances of causing a collision (since there's high reward for collisions) so it keeps on driving around the parking lot until there is a occupied spot to cause a collision. This was an interesting consequence that we did not expect at first. In conclusion, this is clearly a reckless driver.
 
 \subsection{What Next}
 
