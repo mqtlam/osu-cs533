@@ -15,6 +15,7 @@ create_virtualenv() {
 install_dependencies() {
 	# insert python dependencies below
 	pip install numpy
+	pip install matplotlib
 	pip install ipython
 	pip install ipdb
 }
