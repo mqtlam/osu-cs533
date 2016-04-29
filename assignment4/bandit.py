@@ -77,9 +77,9 @@ class SBRDBandit(Bandit):
         # input sanity check
         for i, (r, p) in enumerate(arm_params):
             if r < 0. or r > 1.:
-                raise ValueError('Invalid r param ({}) for arm {}'.format(r, i))
+                raise ValueError('Invalid r param ({0}) for arm {1}'.format(r, i))
             if p < 0. or p > 1.:
-                raise ValueError('Invalid p param ({}) for arm {}'.format(p, i))
+                raise ValueError('Invalid p param ({0}) for arm {1}'.format(p, i))
 
         # initialize
         Bandit.__init__(self, len(arm_params), name)

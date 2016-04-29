@@ -1,3 +1,5 @@
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -76,7 +78,7 @@ class Plot:
             experiment_name: experiment name (string)
         """
         self._plot('Simple Regret', self.arm_pulls, self.simple_regret,
-            '{}_simple_regret.png'.format(experiment_name), sample_rate, end_index)
+            '{0}_simple_regret.png'.format(experiment_name), sample_rate, end_index)
 
     def plot_cumulative_regret(self, experiment_name, sample_rate=1, end_index=None):
         """Plot cumulative regret and save figure.
@@ -85,7 +87,7 @@ class Plot:
             experiment_name: experiment name (string)
         """
         self._plot('Cumulative Regret', self.arm_pulls, self.cumulative_regret,
-            '{}_cumulative_regret.png'.format(experiment_name), sample_rate, end_index)
+            '{0}_cumulative_regret.png'.format(experiment_name), sample_rate, end_index)
 
     def _plot(self, regret_type, x, y, output_file, sample_rate, end_index):
         """Plot helper. Saves plot to output file.
@@ -107,7 +109,7 @@ class Plot:
         plt.legend(loc='upper right', frameon=False)
         plt.xlabel('Number of Arm Pulls')
         plt.ylabel(regret_type)
-        plt.title('{} vs. Number of Arm Pulls'.format(regret_type))
+        plt.title('{0} vs. Number of Arm Pulls'.format(regret_type))
 
         # save figure
         plt.savefig(output_file, dpi=72)

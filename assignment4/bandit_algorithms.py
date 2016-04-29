@@ -186,4 +186,4 @@ class EpsilonGreedyAlgorithm(BanditAlgorithm):
         Returns:
             name string
         """
-        return "Epsilon-Greedy, epsilon={}".format(self.epsilon)
+        return "Epsilon-Greedy, epsilon={0}".format(self.epsilon)

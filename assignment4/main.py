@@ -1,5 +1,6 @@
 from plot import Plot
 from regret import Regret
+import numpy as np
 import time
 
 ### PART 1
@@ -25,9 +26,12 @@ for a in range(20):
 bandit2 = SBRDBandit(arm_params, 'bandit2')
 
 # custom bandit problem
-arm_params = [(1, 0.5)]
+arm_params = []
+for a in range(10):
+    arm_params.append((0.01, 1))
 for a in range(9):
-    arm_params.append((0.05, 0.5))
+    arm_params.append((1, 0.49))
+arm_params.append((1, 0.5))
 bandit3 = SBRDBandit(arm_params, 'custom_bandit')
 
 ### PARTS 3 and 4
@@ -48,11 +52,12 @@ def run_bandit_experiment(bandit, num_pulls, num_trials):
 
     # experiment loop
     for a in algorithms:
-        print '\nRunning algorithm {}...'.format(a.get_name())
+        print '\nRunning algorithm {0}...'.format(a.get_name())
         plot.reset_trial()
 
+        best_arms = np.zeros(num_trials)
         for t in range(num_trials):
-            print 'Running trial {}...'.format(t)
+            print 'Running trial {0}...'.format(t)
             start = time.time()
 
             plot.begin_trial()
@@ -76,17 +81,21 @@ def run_bandit_experiment(bandit, num_pulls, num_trials):
                         regret.get_cumulative_regret(), a.get_name())
 
             end = time.time()
-            print '\telapsed: {}'.format(end-start)
-            print '\tbest arm: {}'.format(a.get_best_arm())
+            print '\telapsed: {0}'.format(end-start)
+            print '\tbest arm: {0}'.format(a.get_best_arm())
+            best_arms[t] = a.get_best_arm()
+
+        print "Best arm distribution: "
+        print np.histogram(best_arms, bins=range(21))
 
     # create plot
     plot.plot_simple_regret(bandit.get_name())
     plot.plot_cumulative_regret(bandit.get_name())
 
     # save
-    plot.save('{}_data'.format(bandit.get_name()))
+    plot.save('{0}_data'.format(bandit.get_name()))
 
 # run bandit experiments
 run_bandit_experiment(bandit1, num_pulls, num_trials)
 run_bandit_experiment(bandit2, num_pulls, num_trials)
-# run_bandit_experiment(bandit3, num_pulls, num_trials)
+run_bandit_experiment(bandit3, num_pulls, num_trials)
