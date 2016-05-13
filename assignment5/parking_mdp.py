@@ -27,7 +27,7 @@ class ParkingMDP(MDP):
         self.terminal_state = self.n - 1
 
         # set up rewards and interpretable state mappings
-        self.R = np.zeros((self.n,1))
+        self.R = np.zeros(self.n)
         self.R[self.terminal_state] = 1
         state_id_counter = 0
         for c in range(0, 2): # parking lot column
