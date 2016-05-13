@@ -3,8 +3,16 @@ import numpy as np
 from parking_mdp import ParkingAction
 
 class Policy:
-    """Policy abstract class
+    """Policy from policy vector.
     """
+    def __init__(self, policy):
+        """Initialization.
+
+        Args:
+            policy: policy vector
+        """
+        self.policy = policy
+
     def get_action(self, state):
         """Get the policy action for the given state.
 
@@ -14,14 +22,9 @@ class Policy:
         Returns:
             action
         """
-        raise NotImplementedError()
+        return self.policy[state]
 
-class ParkingPolicy(Policy):
-    """Parking policy abstract class
-    """
-    pass
-
-class RandomParkingPolicy(ParkingPolicy):
+class RandomParkingPolicy(Policy):
     """Random policy.
 
     Selects PARK with probability p and DRIVE with probability 1-p.
@@ -48,7 +51,7 @@ class RandomParkingPolicy(ParkingPolicy):
 
         return action
 
-class SafeRandomParkingPolicy(ParkingPolicy):
+class SafeRandomParkingPolicy(Policy):
     """Safer random policy.
 
     If occupied, selects DRIVE. Otherwise:
@@ -75,5 +78,38 @@ class SafeRandomParkingPolicy(ParkingPolicy):
             action = ParkingAction.PARK
         else:
             action = ParkingAction.DRIVE
+
+        return action
+
+class SafeNoHandicapRandomParkingPolicy(Policy):
+    """Safer random policy that additionally does not park in handicap.
+
+    If occupied or handicap, selects DRIVE. Otherwise:
+    Selects PARK with probability p and DRIVE with probability 1-p.
+    """
+    def __init__(self, mdp, park_probability=0.5):
+        """Initialization.
+
+        Args:
+            mdp: MDP object
+            park_probability: probability of parking [0,1]
+        """
+        self.mdp = mdp
+        self.park_probability = park_probability
+
+    def get_action(self, state):
+        (column, row, occupied, parked) = self.mdp.get_state_params(state)
+
+        if parked == 1:
+            action = ParkingAction.EXIT
+        elif occupied == 1:
+            action = ParkingAction.DRIVE
+        elif occupied == 0:
+            if row == 0:
+                action = ParkingAction.DRIVE
+            elif np.random.uniform() <= self.park_probability:
+                action = ParkingAction.PARK
+            else:
+                action = ParkingAction.DRIVE
 
         return action
