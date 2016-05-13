@@ -2,6 +2,7 @@ import numpy as np
 
 from mdp import MDP
 from parking_mdp import ParkingMDP, ParkingAction
+from policy import RandomParkingPolicy, SafeRandomParkingPolicy
 from simulator import MDPSimulator
 
 ### helper functions to print stuff
@@ -22,20 +23,28 @@ def print_state_helper(state):
 # create MDP
 mdp = ParkingMDP(10, handicap_reward=-100, collision_reward=-10000)
 
-# run simulation
-simulator = MDPSimulator(mdp, initial_state=0)
-while not simulator.in_terminal_state():
-    # get state and reward
-    state = simulator.get_current_state()
-    reward = simulator.get_reward()
-    print "State {0}".format(print_state_helper(mdp.get_state_params(state)))
-    print "Reward {0}".format(reward)
-    print
+# create simulator
+initial_state = 0
+simulator = MDPSimulator(mdp, initial_state=initial_state)
 
-    # random policy
-    action = np.random.randint(0, mdp.m)
-    print "Action {0}".format(ParkingAction.strings[action])
-    print
+# run simulation 1: random policy
+policy = RandomParkingPolicy(mdp, park_probability=0.1)
+avg_reward = 0
+num_trials = 10000
+for i in range(num_trials):
+    simulator.reset(initial_state=initial_state)
+    (total_reward, state_seq, action_seq) = simulator.run_simulation(policy)
+    avg_reward += total_reward
+avg_reward = 1.*avg_reward/num_trials
+print avg_reward
 
-    # take action
-    simulator.take_action(action)
+# run simulation 2: safer random policy
+policy = SafeRandomParkingPolicy(mdp, park_probability=0.1)
+avg_reward = 0
+num_trials = 10000
+for i in range(num_trials):
+    simulator.reset(initial_state=initial_state)
+    (total_reward, state_seq, action_seq) = simulator.run_simulation(policy)
+    avg_reward += total_reward
+avg_reward = 1.*avg_reward/num_trials
+print avg_reward
