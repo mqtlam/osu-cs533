@@ -19,16 +19,17 @@ class QLearner:
 
         # Q-table
         self.qtable = np.zeros((mdp.n, mdp.m))
+        self.num_learning_trials = 0
 
         # parameters for Q-learning
         self.alpha = 0.01 # learning rate
         self.beta = 0.99 # discount factor
 
         # parameters for explore-exploit policy
-        self.epsilon = 0.5 # epsilon-greedy: probability select random action
+        self.epsilon = 0.1 # epsilon-greedy: probability select random action
 
         # other parameters
-        self.MAX_TRIAL_NUM_STEPS = 1000
+        self.MAX_TRIAL_NUM_STEPS = 100
 
     def run_simulation_trial(self):
         """Run one trial of simulation using Q-table without any learning.
@@ -54,8 +55,8 @@ class QLearner:
 
             step += 1
 
-        if step >= self.MAX_TRIAL_NUM_STEPS:
-            print "[{}] run_simulation_trial did not get to terminal state in max num steps".format(time.time())
+        # if step >= self.MAX_TRIAL_NUM_STEPS:
+        #     print "[{}] run_simulation_trial did not get to terminal state in max num steps".format(time.time())
 
         return (total_reward, state_seq, action_seq)
 
@@ -89,11 +90,12 @@ class QLearner:
         reward = self.simulator.get_reward()
         reward_seq.append(reward)
 
-        if step >= self.MAX_TRIAL_NUM_STEPS:
-            print "[{}] run_learning_trial did not get to terminal state in max num steps".format(time.time())
+        # if step >= self.MAX_TRIAL_NUM_STEPS:
+        #     print "[{}] run_learning_trial did not get to terminal state in max num steps".format(time.time())
 
         # update
         self.do_reverse_q_updates(state_seq, reward_seq, action_seq)
+        self.num_learning_trials += 1
 
     def explore_exploit_policy(self, current_state):
         """Epsilon-greedy explore-exploit policy.
@@ -104,7 +106,7 @@ class QLearner:
         Returns:
             action to take
         """
-        if random.uniform(0, 1) <= self.epsilon:
+        if self.num_learning_trials == 0 or random.uniform(0, 1) <= self.epsilon:
             num_actions = self.qtable.shape[1]
             return random.randint(0, num_actions-1)
         else:

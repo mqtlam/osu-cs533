@@ -70,6 +70,10 @@ class ParkingMDP(MDP):
                                     # park the agent
                                     next_state = self.get_state_id(c, r, o, 1)
                                     self.T[a][current_state, next_state] = 1
+                                else:
+                                    # terminate
+                                    next_state = self.terminal_state
+                                    self.T[a][current_state, next_state] = 1
 
                             elif a == ParkingAction.EXIT:
                                 if p == 1:
@@ -106,6 +110,10 @@ class ParkingMDP(MDP):
 
                                     self.T[a][current_state, next_state1] = 1-prob_occupied
                                     self.T[a][current_state, next_state2] = prob_occupied
+                                else:
+                                    # terminate
+                                    next_state = self.terminal_state
+                                    self.T[a][current_state, next_state] = 1
 
     def get_state_id(self, column, row, occupied, parked):
         """Gets the state id given the interpretable state params.
