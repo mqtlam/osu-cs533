@@ -44,7 +44,7 @@ class RandomParkingPolicy(Policy):
 
         if parked == 1:
             action = ParkingAction.EXIT
-        elif np.random.uniform() <= self.park_probability:
+        elif np.random.uniform() < self.park_probability:
             action = ParkingAction.PARK
         else:
             action = ParkingAction.DRIVE
@@ -74,7 +74,7 @@ class SafeRandomParkingPolicy(Policy):
             action = ParkingAction.EXIT
         elif occupied == 1:
             action = ParkingAction.DRIVE
-        elif occupied == 0 and np.random.uniform() <= self.park_probability:
+        elif occupied == 0 and np.random.uniform() < self.park_probability:
             action = ParkingAction.PARK
         else:
             action = ParkingAction.DRIVE
@@ -87,15 +87,17 @@ class SafeNoHandicapRandomParkingPolicy(Policy):
     If occupied or handicap, selects DRIVE. Otherwise:
     Selects PARK with probability p and DRIVE with probability 1-p.
     """
-    def __init__(self, mdp, park_probability=0.5):
+    def __init__(self, mdp, park_probability=0.5, handicap_probability=0):
         """Initialization.
 
         Args:
             mdp: MDP object
             park_probability: probability of parking [0,1]
+            handicap_probability: probability of parking when at handicap
         """
         self.mdp = mdp
         self.park_probability = park_probability
+        self.handicap_probability = handicap_probability
 
     def get_action(self, state):
         (column, row, occupied, parked) = self.mdp.get_state_params(state)
@@ -106,8 +108,11 @@ class SafeNoHandicapRandomParkingPolicy(Policy):
             action = ParkingAction.DRIVE
         elif occupied == 0:
             if row == 0:
-                action = ParkingAction.DRIVE
-            elif np.random.uniform() <= self.park_probability:
+                if np.random.uniform() < self.handicap_probability:
+                    action = ParkingAction.PARK
+                else:
+                    action = ParkingAction.DRIVE
+            elif np.random.uniform() < self.park_probability:
                 action = ParkingAction.PARK
             else:
                 action = ParkingAction.DRIVE

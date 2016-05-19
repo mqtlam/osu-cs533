@@ -23,7 +23,16 @@ class MDPSimulator:
         self.terminal_state = False
 
     def run_simulation(self, policy):
-        """Run simulation with policy.
+        """Run simulation with policy until terminal state.
+
+        Args:
+            policy: policy object
+
+        Returns:
+            (total_reward, state_seq, action_seq) where
+                total_reward is total accumulated reward
+                state_seq is sequence of states
+                action_seq is sequence of actions taken
         """
         total_reward = 0
         state_seq = []
