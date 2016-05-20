@@ -7,7 +7,7 @@ from simulator import MDPSimulator
 class QLearner:
     """Q-learning algorithm.
     """
-    def __init__(self, mdp, initial_state):
+    def __init__(self, mdp, initial_state, epsilon=0.1, alpha=0.01):
         """Initialization.
 
         Args:
@@ -22,11 +22,11 @@ class QLearner:
         self.num_learning_trials = 0
 
         # parameters for Q-learning
-        self.alpha = 0.01 # learning rate
+        self.alpha = alpha # learning rate
         self.beta = 0.99 # discount factor
 
         # parameters for explore-exploit policy
-        self.epsilon = 0.1 # epsilon-greedy: probability select random action
+        self.epsilon = epsilon # epsilon-greedy: probability select random action
 
         # other parameters
         self.MAX_TRIAL_NUM_STEPS = 100
@@ -54,9 +54,6 @@ class QLearner:
             self.simulator.take_action(action)
 
             step += 1
-
-        # if step >= self.MAX_TRIAL_NUM_STEPS:
-        #     print "[{}] run_simulation_trial did not get to terminal state in max num steps".format(time.time())
 
         return (total_reward, state_seq, action_seq)
 
@@ -89,9 +86,6 @@ class QLearner:
         state_seq.append(state)
         reward = self.simulator.get_reward()
         reward_seq.append(reward)
-
-        # if step >= self.MAX_TRIAL_NUM_STEPS:
-        #     print "[{}] run_learning_trial did not get to terminal state in max num steps".format(time.time())
 
         # update
         self.do_reverse_q_updates(state_seq, reward_seq, action_seq)

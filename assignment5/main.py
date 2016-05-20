@@ -2,9 +2,10 @@ import numpy as np
 
 from mdp import MDP
 from parking_mdp import ParkingMDP, ParkingAction
-from policy import Policy, RandomParkingPolicy, SafeRandomParkingPolicy, SafeNoHandicapRandomParkingPolicy
+from policy import Policy, RandomParkingPolicy, SafeRandomParkingPolicy, SafeHandicapRandomParkingPolicy
 from simulator import MDPSimulator
 from qlearner import QLearner
+from plot import Plot
 
 from mdp_optimization import InfiniteHorizonPolicyOptimization
 
@@ -51,7 +52,7 @@ avg_reward = 1.*avg_reward/num_trials
 print "MDP1 safer random policy: {0}".format(avg_reward)
 
 # run simulation 3: safer no handicap random policy
-policy = SafeNoHandicapRandomParkingPolicy(mdp1, park_probability=0.1)
+policy = SafeHandicapRandomParkingPolicy(mdp1, park_probability=0.1, handicap_probability=0)
 avg_reward = 0
 num_trials = 1000
 for i in range(num_trials):
@@ -60,6 +61,17 @@ for i in range(num_trials):
     avg_reward += total_reward
 avg_reward = 1.*avg_reward/num_trials
 print "MDP1 safer no handicap random policy: {0}".format(avg_reward)
+
+# run simulation 3: safer handicap random policy
+policy = SafeHandicapRandomParkingPolicy(mdp1, park_probability=0.1, handicap_probability=1)
+avg_reward = 0
+num_trials = 1000
+for i in range(num_trials):
+    simulator.reset(initial_state=initial_state1)
+    (total_reward, state_seq, action_seq) = simulator.run_simulation(policy)
+    avg_reward += total_reward
+avg_reward = 1.*avg_reward/num_trials
+print "MDP1 safer handicap random policy: {0}".format(avg_reward)
 
 # run simulation 4: optimal policy
 _, optimal_policy = InfiniteHorizonPolicyOptimization.policy_iteration(mdp1, discount_factor)
@@ -103,7 +115,18 @@ avg_reward = 1.*avg_reward/num_trials
 print "MDP2 safer random policy: {0}".format(avg_reward)
 
 # run simulation 3: safer no handicap random policy
-policy = SafeNoHandicapRandomParkingPolicy(mdp2, park_probability=0.1, handicap_probability=1.0)
+policy = SafeHandicapRandomParkingPolicy(mdp2, park_probability=0.1, handicap_probability=0)
+avg_reward = 0
+num_trials = 1000
+for i in range(num_trials):
+    simulator.reset(initial_state=initial_state2)
+    (total_reward, state_seq, action_seq) = simulator.run_simulation(policy)
+    avg_reward += total_reward
+avg_reward = 1.*avg_reward/num_trials
+print "MDP2 safer no handicap random policy: {0}".format(avg_reward)
+
+# run simulation 3: safer handicap random policy
+policy = SafeHandicapRandomParkingPolicy(mdp2, park_probability=0.1, handicap_probability=1)
 avg_reward = 0
 num_trials = 1000
 for i in range(num_trials):
@@ -127,38 +150,123 @@ print "MDP2 optimal policy: {0}".format(avg_reward)
 print
 
 
-### PART III: MDP 1
-qlearner = QLearner(mdp1, initial_state1)
-
+### SETUP
 num_learning_trials = 10000
 num_simulation_trials = 1000
-num_learning_epochs = 20
-for epoch in range(num_learning_epochs):
-    for trial in range(num_learning_trials):
-        qlearner.run_learning_trial()
+num_learning_epochs = 15
 
-    avg_reward = 0
-    for trial in range(num_simulation_trials):
-        (total_reward, state_seq, action_seq) = qlearner.run_simulation_trial()
-        avg_reward += total_reward
-    avg_reward = 1.*avg_reward/num_simulation_trials
-    print "MDP1 epoch {0}: {1}".format(epoch, avg_reward)
+
+### PART III: MDP 1 epsilon experiments
+epsilon_list = [0.1, 0.25, 0.5, 0.75]
+learning_rate = 0.01
+epoch_list = []
+avg_reward_list = []
+
+for e, epsilon in enumerate(epsilon_list):
+    print "Epsilon: {0}".format(epsilon)
+
+    qlearner = QLearner(mdp1, initial_state1, epsilon=epsilon, alpha=learning_rate)
+
+    epoch_list.append(range(num_learning_epochs))
+    avg_reward_list.append([])
+    for epoch in epoch_list[e]:
+        for trial in range(num_learning_trials):
+            qlearner.run_learning_trial()
+
+        avg_reward = 0
+        for trial in range(num_simulation_trials):
+            (total_reward, state_seq, action_seq) = qlearner.run_simulation_trial()
+            avg_reward += total_reward
+        avg_reward = 1.*avg_reward/num_simulation_trials
+        avg_reward_list[e].append(avg_reward)
+        print "MDP1 epoch {0}: {1}".format(epoch, avg_reward)
+
+Plot.plot_multiple(epoch_list, avg_reward_list, [str(e) for e in epsilon_list], 'epsilon', 'MDP1 Learning: Epsilon', 'mdp1_epsilon_plot.png')
 print
 
 
-### PART III: MDP 2
-qlearner = QLearner(mdp2, initial_state2)
+### PART III: MDP 1 alpha experiments
+epsilon = 0.25
+learning_rate_list = [0.001, 0.01, 0.1, 1.0]
+epoch_list = []
+avg_reward_list = []
 
-num_learning_trials = 10000
-num_simulation_trials = 1000
-num_learning_epochs = 20
-for epoch in range(num_learning_epochs):
-    for trial in range(num_learning_trials):
-        qlearner.run_learning_trial()
+for a, learning_rate in enumerate(learning_rate_list):
+    print "Alpha: {0}".format(learning_rate)
 
-    avg_reward = 0
-    for trial in range(num_simulation_trials):
-        (total_reward, state_seq, action_seq) = qlearner.run_simulation_trial()
-        avg_reward += total_reward
-    avg_reward = 1.*avg_reward/num_simulation_trials
-    print "MDP2 epoch {0}: {1}".format(epoch, avg_reward)
+    qlearner = QLearner(mdp1, initial_state1, epsilon=epsilon, alpha=learning_rate)
+
+    epoch_list.append(range(num_learning_epochs))
+    avg_reward_list.append([])
+    for epoch in epoch_list[a]:
+        for trial in range(num_learning_trials):
+            qlearner.run_learning_trial()
+
+        avg_reward = 0
+        for trial in range(num_simulation_trials):
+            (total_reward, state_seq, action_seq) = qlearner.run_simulation_trial()
+            avg_reward += total_reward
+        avg_reward = 1.*avg_reward/num_simulation_trials
+        avg_reward_list[a].append(avg_reward)
+        print "MDP1 epoch {0}: {1}".format(epoch, avg_reward)
+
+Plot.plot_multiple(epoch_list, avg_reward_list, [str(a) for a in learning_rate_list], 'alpha', 'MDP1 Learning: Learning Rate', 'mdp1_alpha_plot.png')
+print
+
+
+### PART III: MDP 2 epsilon experiments
+epsilon_list = [0.1, 0.25, 0.5, 0.75]
+learning_rate = 0.01
+epoch_list = []
+avg_reward_list = []
+
+for e, epsilon in enumerate(epsilon_list):
+    print "Epsilon: {0}".format(epsilon)
+
+    qlearner = QLearner(mdp2, initial_state2, epsilon=epsilon, alpha=learning_rate)
+
+    epoch_list.append(range(num_learning_epochs))
+    avg_reward_list.append([])
+    for epoch in epoch_list[e]:
+        for trial in range(num_learning_trials):
+            qlearner.run_learning_trial()
+
+        avg_reward = 0
+        for trial in range(num_simulation_trials):
+            (total_reward, state_seq, action_seq) = qlearner.run_simulation_trial()
+            avg_reward += total_reward
+        avg_reward = 1.*avg_reward/num_simulation_trials
+        avg_reward_list[e].append(avg_reward)
+        print "MDP2 epoch {0}: {1}".format(epoch, avg_reward)
+
+Plot.plot_multiple(epoch_list, avg_reward_list, [str(e) for e in epsilon_list], 'epsilon', 'MDP2 Learning: epsilon', 'mdp2_epsilon_plot.png')
+print
+
+
+### PART III: MDP 2 alpha experiments
+epsilon = 0.25
+learning_rate_list = [0.001, 0.01, 0.1, 1.0]
+epoch_list = []
+avg_reward_list = []
+
+for a, learning_rate in enumerate(learning_rate_list):
+    print "Alpha: {0}".format(learning_rate)
+
+    qlearner = QLearner(mdp2, initial_state2, epsilon=epsilon, alpha=learning_rate)
+
+    epoch_list.append(range(num_learning_epochs))
+    avg_reward_list.append([])
+    for epoch in epoch_list[a]:
+        for trial in range(num_learning_trials):
+            qlearner.run_learning_trial()
+
+        avg_reward = 0
+        for trial in range(num_simulation_trials):
+            (total_reward, state_seq, action_seq) = qlearner.run_simulation_trial()
+            avg_reward += total_reward
+        avg_reward = 1.*avg_reward/num_simulation_trials
+        avg_reward_list[a].append(avg_reward)
+        print "MDP2 epoch {0}: {1}".format(epoch, avg_reward)
+
+Plot.plot_multiple(epoch_list, avg_reward_list, [str(a) for a in learning_rate_list], 'alpha', 'MDP2 Learning: Learning Rate', 'mdp2_alpha_plot.png')
+print

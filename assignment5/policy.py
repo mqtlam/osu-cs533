@@ -81,11 +81,12 @@ class SafeRandomParkingPolicy(Policy):
 
         return action
 
-class SafeNoHandicapRandomParkingPolicy(Policy):
-    """Safer random policy that additionally does not park in handicap.
+class SafeHandicapRandomParkingPolicy(Policy):
+    """Safer random policy with probability of parking in handicap spot.
 
-    If occupied or handicap, selects DRIVE. Otherwise:
-    Selects PARK with probability p and DRIVE with probability 1-p.
+    If occupied, selects DRIVE. Otherwise:
+    If handicap, selects PARK with probability p_h and DRIVE with probability 1-p_h.
+    Otherwise selects PARK with probability p and DRIVE with probability 1-p.
     """
     def __init__(self, mdp, park_probability=0.5, handicap_probability=0):
         """Initialization.
@@ -93,7 +94,7 @@ class SafeNoHandicapRandomParkingPolicy(Policy):
         Args:
             mdp: MDP object
             park_probability: probability of parking [0,1]
-            handicap_probability: probability of parking when at handicap
+            handicap_probability: probability of parking when at handicap [0,1]
         """
         self.mdp = mdp
         self.park_probability = park_probability
